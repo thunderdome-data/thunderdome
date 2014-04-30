@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<title>Digital First Media properties</title>
+
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.css" />
+
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.ie.css" />
+<![endif]-->
+
+<!--this stylesheet has the CSS for both a map and a table-->
+<link rel="stylesheet" href="../lib/css/mapTable.css" />
+<script src="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.js"></script>
+
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script src="../lib/js/jquery-1.8.2.min.js"></script>
+
+<script src="../lib/js/underscore-min.js"></script>
+<script src="../lib/js/backbone-min.js"></script>
+<script src="../lib/js/handlebars-1.0.rc.1.js"></script>
+<script src="../lib/js/thunderdome.js"></script>
+<script src="../lib/js/oms.min.js"></script>
+<script type="text/javascript">
+//google visualization libs we need
+google.load('visualization', '1.1', {packages: ['controls','table']});
+</script>
+
+<script type="text/javascript">
+//if we need to have more than one marker show up based on some criteria
+//set it here and then below in the config
+var markerColors = function(item) {
+	if(item == 'D') { 
+		return '../lib/images/markers/pointer-blue.png'; 
+	}
+	return '../lib/images/markers/pointer-orange.png';
+}
+
+//map config stuff
+var mapConfig = new Thunderdome.mapConfig( {
+	mapAPI:			'Leaflet',
+	mapTiles:		'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', //CloudMade map tiles to use
+	attribution:	'<a href="http://openstreetmap.org">OpenStreetMap</a>,'
+					+ 'under <a href="http://creativecommons.org/licenses/by-sa/3.0">CC BY SA</a>.', //Text for map attribution
+	//Start lat, lon and zoom level for map init
+	startLat:		39.6, 
+	startLon:		-96.75,
+	startZoom:		4,
+	mapDiv:			'map', //id of div where map will go
+	showMarkers:	true,
+	//fields from JSON data we want to show in popups and modal window (for detail)
+	//should correspond to placeholders in handlebars templates
+	popupItems: 	['Site','City','State','URL','Brand Twitter handle','Brand Facebook URL','Newseum front page link'],
+	popupTemplate:	'popupText', //id of handlebars template script
+
+	modalDiv:		'modal', //id of div used by jquery dialog ui
+	modalWidth:		300, //width of modal window
+	modalHeight:	'auto', //height of modal window
+	modalTitle:		'property',
+	modalItems: 	['Site','City','State','URL','Brand Twitter handle','Brand Facebook URL','Newseum front page link'],   
+
+	modalTemplate:	'modalText', //id of handlebars template script
+	//field from JSON data to use for marker key
+	//should be unique; used to retrieve markers for callbacks
+	markerKey:		'Site',
+	markerColors:	markerColors,
+	markerColorKey:	'Frequency', //field we'll use to determine what marker color to show
+	legend:			true,
+	mapLegendTemplate: 'mapLegendTemplate',
+	mapLegendClass: 'thekey',
+	showTable:		true
+} );
+
+
+//config for the datagrid
+var tableConfig = new Thunderdome.tableConfig({
+	//IDs of divs where pieces will go
+	mainDiv: 		'gridContainer',
+	searchDiv: 		'searchField',
+	tableDiv: 		'dfm',
+	showSearch:		true, //do we want a search field?
+	showCategory:	true, //do we want a pulldown to filter the results?
+	showMap:		true,
+	//table header config
+	//'label' is what shows in that column head
+	//'type' is the data type (used for sorting, etc.)
+	//TODO: try to abstract this to make config simpler
+	tableHeader:	[
+						{'label': 'Property', 'type': 'string'},
+						{'label': 'State', 'type': 'string'},
+						{'label': 'Division', 'type': 'string'}
+						
+					],
+	//fields from JSON data we want to show in table
+	//for example {'Site': 'Example Site', 'State': 'CA', 'MNG/JRC','Another Field': 'Some data'}
+	//would only show data from Site, State and MNG/JRC
+	tableCols:		['Site','State', 'MNG/JRC'],
+
+	//table column we want search field to filter
+	//should be name of the label in tableHeader above
+	fieldToSearch: 	'Property',
+	categoryToFilter: 	'Division',
+
+	searchLabel:	'Search properties', //label text added to search field
+	categoryLabel:	'Filter by division', //label text added to category dropdown
+	searchCSSClass:	'searchFieldText', //css applied to search field text
+	categoryCSSClass:	'categoryFilterText', //css applied to category dropdown text
+	headerCSSClass:	'', //css applied to header
+	rowCSSClass:	'' //css applied to rows
+});
+
+
+var drawMapAndGrid = function() {
+	var collection;
+	Thunderdome.csv("https://docs.google.com/spreadsheet/pub?key=0Arge6e6GMpdUdFJ2WHFPUmZmQXQxRWMtR25TM0U0Mmc&single=true&gid=2&output=csv", function(data) {
+	
+	collection = new Backbone.Collection(data);
+	
+
+	Thunderdome.data = collection;
+	Thunderdome.mapConfig = mapConfig;
+	Thunderdome.tableConfig = tableConfig;
+	var theMap = Thunderdome.makeMap();
+	var theTable = Thunderdome.makeDataTable(theMap);
+
+	});
+}
+
+//we need to wait till all the google libraries are ready, then fire the callback
+google.setOnLoadCallback(drawMapAndGrid);
+</script>
+
+</head>
+	<body>
+	<div id="containter">
+		<div id="map" class="floatLeft map"></div>
+			<div id="gridContainer" class="floatLeft gridContainer">
+				<div id="searchField" style="float:left;"></div>
+				<div id="filterCategory"></div>
+				<div id="dfm" class="tableContainer clearBoth"></div>
+			</div>
+	</div>
+
+<!--handlebars template to build map popups-->
+
+<script id="popupText" type="text/x-handlebars-template">
+  <b><a href="{{URL}}">{{Site}}</a></b><br />
+  {{City}}, {{State}}<br />
+  {{#if [Brand Facebook URL]}}
+	Facebook: <a href="{{[Brand Facebook URL]}}" target="_blank">Our page</a> <br />
+  {{/if}}
+  {{#if [Brand Twitter handle]}}
+	Twitter: {{[Brand Twitter handle]}} <br />	
+  {{/if}}
+  {{#if [Newseum front page link]}}
+	<a href="{{[Newseum front page link]}}" target="_blank">Today's front page</a>
+  {{/if}}
+</script>
+<script id="mapLegendTemplate" type="text/x-handlebars-template">
+	<p><img src="data/lib/images/markers/pointer-blue.png" /><span class="keytext">Dailies</span></p>
+	<p><img src="data/lib/images/markers/pointer-orange.png" /><span class="keytext">Weeklies</span></p>
+</script>
+
+	</body>
+</html>

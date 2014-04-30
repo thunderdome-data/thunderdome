@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+<title>Digital First Media properties</title>
+
+<!--[if lte IE 8]>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.4.5/leaflet.ie.css" />
+<![endif]-->
+
+<!--this stylesheet has the CSS for both a map and a table-->
+<link rel="stylesheet" href="../lib/css/mapTable.css" />
+
+<script type="text/javascript" src="http://www.google.com/jsapi"></script>
+<script src="../lib/js/underscore-min.js"></script>
+<script src="../lib/js/backbone-min.js"></script>
+<script src="../lib/js/thunderdome.js"></script>
+
+<script type="text/javascript">
+//google visualization libs we need
+google.load('visualization', '1.1', {packages: ['controls','table']});
+</script>
+
+<script>
+//config for the datagrid
+var tableConfig = new Thunderdome.tableConfig({
+	//IDs of divs where pieces will go
+	mainDiv: 		'gridContainer',
+	searchDiv: 		'searchField',
+	tableDiv: 		'dfm',
+	showSearch:		true, //do we want a search field?
+	showCategory:	true, //do we want a pulldown to filter the results?
+	showMap:		false,//do we want a map?
+	//table header config
+	//'label' is what shows in that column head
+	//'type' is the data type (used for sorting, etc.)
+	//TODO: try to abstract this to make config simpler
+	tableHeader:	[
+						{'label': 'Property', 'type': 'string'},
+						{'label': 'State', 'type': 'string'},
+						{'label': 'Division', 'type': 'string'}
+						
+					],
+	//fields from JSON data we want to show in table
+	//for example {'Site': 'Example Site', 'State': 'CA', 'MNG/JRC','Another Field': 'Some data'}
+	//would only show data from Site, State and MNG/JRC
+	tableCols:		['Site','State', 'MNG/JRC'],
+
+	//table column we want search field to filter
+	//should be name of the label in tableHeader above
+	fieldToSearch: 	'Property',
+	categoryToFilter: 	'Division',
+
+	searchLabel:	'Search properties', //label text added to search field
+	categoryLabel:	'Filter by division', //label text added to category dropdown
+	searchCSSClass:	'searchFieldText', //css applied to search field text
+	categoryCSSClass:	'categoryFilterText', //css applied to category dropdown text
+	headerCSSClass:	'', //css applied to header
+	rowCSSClass:	'' //css applied to rows
+});
+
+
+//callback function that draws the grid
+var drawGrid = function() {
+	var collection;
+	//this uses some code I cribbed from d3 to convert CSV into JSON.
+	//If your data is already in JSON or you're fetching it via JSONP, just pass it to
+	//to Backbone.Collection as noted below
+
+	Thunderdome.csv("https://docs.google.com/spreadsheet/pub?key=0Arge6e6GMpdUdFJ2WHFPUmZmQXQxRWMtR25TM0U0Mmc&single=true&gid=2&output=csv", function(data) {
+		collection = new Backbone.Collection(data); //here's where we're passing the data
+		Thunderdome.data = collection;
+		Thunderdome.tableConfig = tableConfig;
+		var theTable = Thunderdome.makeDataTable();
+
+	});
+}
+//we need to wait till all the google libraries are ready, then fire the callback
+google.setOnLoadCallback(drawGrid);
+</script>
+
+</head>
+	<body>
+	<div id="containter">
+		<div id="gridContainer" class="floatLeft gridContainer">
+			<div id="searchField" style="float:left;"></div>
+			<div id="filterCategory"></div>
+			<div id="dfm" class="tableContainer clearBoth"></div>
+		</div>
+	</div>
+
+	</body>
+</html>
