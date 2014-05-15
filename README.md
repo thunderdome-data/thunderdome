@@ -6,7 +6,7 @@ What is this?
 
 JavaScript tools to create maps and linked datatables
 
-This was a work in progress. See the examples in /examples for more details
+This was a work in progress. See the html examples in /examples for more details on how to use it.
 
 Credits
 ---------
