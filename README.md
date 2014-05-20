@@ -7,9 +7,10 @@ What is this?
 JavaScript tools to create maps and linked datatables
 
 Map demo: http://outsidethunderdome.com/about/who-we-serve/
+
 Table demo: http://www.news-herald.com/sports/20140427/high-school-football-news-herald-playoff-results-database
 
-This was a work in progress. See the html examples in /examples for more details on how to use it.
+This was a work in progress. See the html examples in [/examples](examples/) for more details on how to use it.
 
 Credits
 ---------
